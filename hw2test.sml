@@ -49,5 +49,9 @@ val test16 = ((officiate_challenge ([(Clubs,Jack),(Spades,Num(8))],
                          42);
                false) 
               handle IllegalMove => true)
-             
+
+(* 
+careful_player ([(Spades,Num 7),(Hearts,King),(Clubs,Ace),(Diamonds,Num 2)], 18);
+careful_player ([(Diamonds,Num 2),(Clubs,Ace)], 11);
+  *)
              

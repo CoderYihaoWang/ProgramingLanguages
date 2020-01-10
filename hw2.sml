@@ -4,10 +4,14 @@
  *)
 
 
+
+
 (* ----- start: Dan Grossman, Coursera PL, HW2 Provided Code ----- *)
 fun same_string(s1 : string, s2 : string) =
     s1 = s2
 (* ----- end: Dan Grossman, Coursera PL, HW2 Provided Code ----- *)
+
+
 
 
 (* ----- start of problem 1 ----- *)
@@ -21,12 +25,14 @@ fun all_except_option (x, xs) =
     in  if is_in (x, xs) then SOME (all_except (x, xs)) else NONE
     end
 
+
 (* b. val get_substitutions1 = fn : string list list * string -> string list *)
 fun get_substitutions1 ([], _) = [] 
   | get_substitutions1 (x::xs, s) = 
         case all_except_option (s, x) of
             NONE     => get_substitutions1 (xs, s)
           | SOME lst => lst @ get_substitutions1 (xs, s) 
+
 
 (* c. val get_substitutions2 = fn : string list list * string -> string list *)
 fun get_substitutions2 (subs, s) = 
@@ -38,6 +44,7 @@ fun get_substitutions2 (subs, s) =
     in  aux (subs, s, [])
     end
 
+
 (* d. val similar_names = fn : string list list * {string, string, string} -> {string, string, string} list *)
 fun similar_names (subs, {first=x, middle=y, last=z}) = 
     let fun substitute ([], _) = []
@@ -47,7 +54,10 @@ fun similar_names (subs, {first=x, middle=y, last=z}) =
         ::substitute (get_substitutions2 (subs, x), {first=x, middle=y, last=z})
     end
 
+
 (* ----- end of problem 1 ----- *)
+
+
 
 
 (* ----- start: Dan Grossman, Coursera PL, HW2 Provided Code ----- *)
@@ -62,6 +72,8 @@ exception IllegalMove
 (* ----- end: Dan Grossman, Coursera PL, HW2 Provided Code ----- *)
 
 
+
+
 (* ----- start of problem 2 ----- *)
 (* a. val card_color = fn : card -> color *)
 fun card_color (s, _) = 
@@ -70,12 +82,14 @@ fun card_color (s, _) =
       | Hearts   => Red
       | _        => Black
 
+
 (* b. val card_value = fn : card -> int *)
 fun card_value (_, r) = 
     case r of 
         Num i => i
       | Ace   => 11
       | _     => 10
+
 
 (* c. val remove_card = fn : card list * card * exn -> card list raise exn *)
 fun remove_card (cards, card, e) = 
@@ -88,10 +102,12 @@ fun remove_card (cards, card, e) =
         else raise e
     end
 
+
 (* d. val all_same_color = fn : card list -> bool *)
 fun all_same_color (x::nk::xs) = 
         (card_color x) = (card_color nk) andalso all_same_color (nk::xs) 
-  | all_same_color _ = true
+  | all_same_color _ = true (* zero or only one card is always of the same color *)
+
 
 (* e. val sum_cards = fn : card list -> int *)
 fun sum_cards cards =
@@ -100,6 +116,7 @@ fun sum_cards cards =
     in  aux (cards, 0)
     end
 
+
 (* f. val score = fn : card list * int -> int *)
 fun score (cards, goal) =
     let val sum = sum_cards cards
@@ -107,55 +124,74 @@ fun score (cards, goal) =
     in  if all_same_color cards then pre div 2 else pre
     end
 
+
 (* g. val officiate = fn : card list * move list * int -> int *)
 fun officiate (cl, mv, gl) = 
     (* move (held: card list, cards: card list, moves: move list, goal: int) -> int *)
-    let fun move (held, _, [], gl) = score (held, gl)
-          | move (held, [], Draw::_, gl) = score (held, gl)
-          | move (held, c::cs, Draw::ms, gl) =  
+    let fun move (held, _, [], gl) = score (held, gl)       (* no more moves *)
+          | move (held, [], Draw::_, gl) = score (held, gl) (* drawing from an empty card list *)
+          | move (held, c::cs, Draw::ms, gl) =              (* successfal drawing *)
                 if   sum_cards (c::held) > gl
                 then score (c::held, gl)
                 else move (c::held, cs, ms, gl)
           | move (held, cl, Discard d::ms, gl) = move (remove_card(held, d, IllegalMove), cl, ms, gl)
+                                                            (* discarding a card from held cards *)
     in  move ([], cl, mv, gl)
     end
+
 
 (* ----- end of problem 2 ----- *)
 
 
+
+
 (* ----- start of problem 3 ----- *)
 
+(* two helper functions used by both challenge functions in this problem *)
+(* returns a list of all possible sums of a deck of card, in which each Ace can be 1 or 11 *)
 fun sums_cards cards = 
+    (* this function return a tuple comprised of a sum which is the same as the old version, 
+       and the number of Aces *)
     let fun aux ([], sum, n) = (sum, n)
           | aux (x::xs, sum, n) = 
                 if   card_value x = 11
                 then aux (xs, sum + (card_value x), n + 1)
                 else aux (xs, sum + (card_value x), n)
+        (* this function takes in the tuple returned by the above function, 
+           and makes a list of all possible sums *)
         fun get_sums (sum, n) =
                 if   n = 0 then sum::[]
                 else sum::(get_sums (sum - 10, n - 1))
     in  get_sums (aux (cards, 0, 0))
     end
 
+(* this function returns the smallest number in a list. 
+   The caller must make sure that the passed in list is non-empty *)
 fun get_smallest (x::[]) = x
   | get_smallest (x::nk::xs) = 
         if x < nk then get_smallest (x::xs) else get_smallest (nk::xs)
   | get_smallest _ = ~1 (* should never reach this branch *)
 
+
 (* a-1. val score_challenge = fn : card list * int -> int *)
 fun score_challenge (cards, goal) = 
+    (* get a sum and a goal, returns the score *)
     let fun get_score (sum, goal) = 
             let val pre = if goal >= sum then goal - sum else 3 * (sum - goal)
             in  if all_same_color cards then pre div 2 else pre
             end
+        (* calls get_score on a list of sums, and returns a list of scores *)
         fun get_scores ([], _) = []
           | get_scores (s::ss, goal) = 
                 get_score (s, goal)::(get_scores (ss, goal))
     in  get_smallest (get_scores (sums_cards cards, goal)) 
     end
 
+
 (* a-2. val officiate_challenge = fn : card list * move list * int -> int *)
 fun officiate_challenge (cl, mv, gl) = 
+    (* almost the same as the old version, except for substitute score_challenge for score
+       and get_smallest (sums_cards (...)) for sum_cards (...) *)
     let fun move (held, _, [], gl) = score_challenge (held, gl)
           | move (held, [], Draw::_, gl) = score_challenge (held, gl)
           | move (held, c::cs, Draw::ms, gl) =  
@@ -165,6 +201,7 @@ fun officiate_challenge (cl, mv, gl) =
           | move (held, cl, Discard d::ms, gl) = move (remove_card(held, d, IllegalMove), cl, ms, gl)
     in  move ([], cl, mv, gl)
     end
+
 
 (* b. val careful_player = fn : card list * int -> move list *)
 (* This solution implements the following strategy:
@@ -200,19 +237,19 @@ fun careful_player (cl, gl) =
                     then get_closest (nk::cs, target)
                     else get_closest (c::cs, target)
                 end
+        (* implements the strategy described above *)
         fun play (held, cl, mv, gl) = 
                 let val gap = gl - (sum_cards held) in
                 if  gap = 0 then mv else
                 case cl of
-                    [] => Draw::mv
+                    [] => mv @ (Draw::[])
                   | c::cs => 
                         if   card_value c <= gap
-                        then play (c::held, cs, Draw::mv, gl) else
+                        then play (c::held, cs, mv @ (Draw::[]), gl) else
                         case get_closest (held, card_value c - gap) of
-                             SOME cd => play (remove_card (held, cd, IllegalMove), cs, Draw::(Discard cd)::mv, gl)
+                             SOME cd => play (c::remove_card (held, cd, IllegalMove), cs, 
+                                                mv @ (Discard cd :: (Draw::[])), gl)
                            | NONE    => mv
                 end
     in  play ([], cl, [], gl)
     end
-
-(* ----- end of problem 3 ----- *)
