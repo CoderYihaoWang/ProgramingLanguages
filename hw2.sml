@@ -16,15 +16,15 @@ fun same_string(s1 : string, s2 : string) =
 
 (* ----- start of problem 1 ----- *)
 (* a. val all_except_option = fn : string * string list -> string list option *)
-fun all_except_option (x, xs) = 
-    let fun is_in (_, []) = false
-          | is_in (s, x::xs) = same_string (s, x) orelse is_in (s, xs)
-        fun all_except (_, []) = []
-          | all_except (s, x::xs) = 
-                if same_string (s, x) then xs else x::all_except(s, xs) (* assumes only 1 occurance *)
-    in  if is_in (x, xs) then SOME (all_except (x, xs)) else NONE
-    end
-
+fun all_except_option (s, xs) = 
+    case xs of 
+        []     => NONE
+      | x::xs' => 
+            if   same_string (s, x)
+            then SOME xs'
+            else case all_except_option (s, xs') of
+                    NONE     => NONE
+                  | SOME lst => SOME (x::lst)
 
 (* b. val get_substitutions1 = fn : string list list * string -> string list *)
 fun get_substitutions1 ([], _) = [] 
@@ -92,16 +92,9 @@ fun card_value (_, r) =
 
 
 (* c. val remove_card = fn : card list * card * exn -> card list raise exn *)
-fun remove_card (cards, card, e) = 
-    let fun is_in ([], _) = false
-          | is_in (x::xs, c) = x = c orelse is_in (xs, c)
-    in  if   is_in (cards, card)
-        then case cards of
-                x::xs => if x = card then xs else x::remove_card(xs, card, e) (* only removes the first occurance *)
-              | _ => [] (* will never reach this branch *)
-        else raise e
-    end
-
+fun remove_card ([], card, e) = raise e
+  | remove_card (c::cs, card, e) = 
+        if c = card then cs else c::(remove_card (cs, card, e))
 
 (* d. val all_same_color = fn : card list -> bool *)
 fun all_same_color (x::nk::xs) = 
