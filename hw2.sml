@@ -215,7 +215,7 @@ fun officiate_challenge (cl, mv, gl) =
     the player farther from the goal
  *)
 fun careful_player (cl, gl) = 
-    (* get_closest_option : find the card in the list,
+    (* get_closest : find the card in the list,
        which is the smallest among all cards that are greater than or equal to a given target
        return NONE if no such card exists *)
     let fun get_closest ([], _) = NONE
