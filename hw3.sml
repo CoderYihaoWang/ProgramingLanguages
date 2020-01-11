@@ -117,11 +117,12 @@ fun count_some_var (s, p) =
 val check_pat = 
 	let fun get_names p = 
 			case p of
-				Variable x => x::[]
-	          | TupleP ps  => List.foldl (fn (s, acc) => get_names s @ acc) [] ps
-	          | _          => []
-		fun is_unique (x::nk::xs) = x <> nk andalso is_unique (nk::xs)
-		  | is_unique _           = true
+				Variable x           => x::[]
+	          | TupleP ps            => List.foldl (fn (s, acc) => get_names s @ acc) [] ps
+			  | ConstructorP (_, pt) => get_names pt
+	          | _                    => []
+		fun is_unique (x::xs) = not (List.exists (fn a => a = x) xs) andalso is_unique xs
+		  | is_unique _       = true
 	in  is_unique o get_names
 	end
 
@@ -144,4 +145,36 @@ fun first_match v pl =
 
 (* 13. val typecheck_patterns = fn : ((string * string * typ) list) * (pattern list) -> typ option *)
 fun typecheck_patterns (lst, pl) = 
-	
+	let fun get_datatype (ctr, [])            = raise NoAnswer
+	      | get_datatype (ctr, (c, d, t)::xs) = if ctr = c then d else get_datatype (ctr, xs) 
+		fun pattern_to_typ p =
+			case p of 
+		        UnitP               => UnitT
+		  	  | ConstP _            => IntT
+		  	  | ConstructorP (s, _) => Datatype (get_datatype (s, lst))
+		  	  | TupleP pl           => TupleT (List.map pattern_to_typ pl)
+		  	  | _                   => Anything
+		fun get_lenient ts = 
+			case ts of
+ 				(Anything, other) => SOME other
+		  	  | (other, Anything) => SOME other
+		  	  | (UnitT, UnitT)    => SOME UnitT
+		  	  | (IntT, IntT)      => SOME IntT
+		  	  | (Datatype x, Datatype y) => if x = y then SOME (Datatype x) else NONE
+		  	  | (TupleT x, TupleT y) => 
+		  			if (List.length x) <> (List.length y) then NONE
+					else let val lenient = List.map get_lenient (ListPair.zip (x, y))
+							 val valid = List.foldl (fn (x, acc) => case x of NONE => false | _ => acc) true
+					 	 in  if valid lenient 
+						  	 then SOME (TupleT (List.map (fn a => case a of SOME t => t | _ => raise NoAnswer) lenient)) 
+							 else NONE
+					 	 end
+		  	  |  _                => NONE
+	in List.foldl (fn (x, acc) => case acc of NONE => NONE | SOME t => get_lenient (x, t))
+				  (SOME Anything) (List.map pattern_to_typ pl)
+				  handle NoAnswer => NONE
+	end
+
+
+	(* 
+typecheck_patterns: Your function fails when there is no typ that all the patterns in the list can have due to a constructor given an argument with wrong type [incorrect answer] *)

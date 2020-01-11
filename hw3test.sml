@@ -33,3 +33,7 @@ val test11 = match (Const(1), UnitP) = NONE
 
 val test12 = first_match Unit [UnitP] = SOME []
 
+(* 
+typecheck_patterns ([], [TupleP[Variable("x"), Variable("y")], TupleP[Wildcard, Wildcard]]);
+typecheck_patterns ([], [TupleP[Wildcard, Wildcard], TupleP[Wildcard, TupleP[Wildcard, Wildcard]]]);
+ *)
