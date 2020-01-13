@@ -1,6 +1,6 @@
 (*
 	Author       : Yihao Wang
-	Last modified: 11/1/2020
+	Last modified: 12/1/2020
 *)
 
 
@@ -52,11 +52,11 @@ val only_capitals = List.filter (Char.isUpper o (fn l => String.sub (l, 0)))
 
 
 (* 2. val longest_string1 = fn : string list -> string *)
-val longest_string1 = foldl (fn (s, acc) => if (String.size s) > (String.size acc) then s else acc) ""
+val longest_string1 = foldl (fn (s, acc) => if String.size s > String.size acc then s else acc) ""
 
 
 (* 3. val longest_string2 = fn : string list -> string *)
-val longest_string2 = foldl (fn (s, acc) => if (String.size s) >= (String.size acc) then s else acc) ""
+val longest_string2 = foldl (fn (s, acc) => if String.size s >= String.size acc then s else acc) ""
 
 
 (* 4. val longest_string_helper = fn : (int * int -> bool) -> string list -> string
@@ -64,8 +64,7 @@ val longest_string2 = foldl (fn (s, acc) => if (String.size s) >= (String.size a
 	  val longest_string4 = fn : string list -> string
  *)
 val longest_string_helper = 
-		fn f => 
-			foldl (fn (s, acc) => if f (String.size s, String.size acc) then s else acc) ""
+		fn f => foldl (fn (s, acc) => if f (String.size s, String.size acc) then s else acc) ""
 
 val longest_string3 = longest_string_helper (fn (a, b) => a > b)
 
@@ -105,7 +104,7 @@ val count_wildcards = g (fn () => 1) (fn _ => 0)
 
 
 (* 9-b. val count_wild_and_variable_lengths = fn : pattern -> int *)
-val count_wild_and_variable_lengths = g (fn () => 1) (fn s => String.size s)
+val count_wild_and_variable_lengths = g (fn () => 1) String.size
 
 
 (* 9-c. val count_some_var = fn : (string * pattern) -> int *)
@@ -144,9 +143,17 @@ fun first_match v pl =
 	handle NoAnswer => NONE
 
 (* 13. val typecheck_patterns = fn : ((string * string * typ) list) * (pattern list) -> typ option *)
+(* The auto-grader generates the following information, which I still haven't found a way to fix:
+	typecheck_patterns: Your function fails 
+		when there is no typ that all the patterns in the list can have 
+		due to a constructor given an argument with wrong type 
+		[incorrect answer]
+ *)
 fun typecheck_patterns (lst, pl) = 
+	    (* get_datatype: converting a constructor name to the corresponding datatype name *)
 	let fun get_datatype (ctr, [])            = raise NoAnswer
 	      | get_datatype (ctr, (c, d, t)::xs) = if ctr = c then d else get_datatype (ctr, xs) 
+		(* pattern_to_typ: converting a pattern to the corresponding typ (the widest one) *) 
 		fun pattern_to_typ p =
 			case p of 
 		        UnitP               => UnitT
@@ -154,19 +161,20 @@ fun typecheck_patterns (lst, pl) =
 		  	  | ConstructorP (s, _) => Datatype (get_datatype (s, lst))
 		  	  | TupleP pl           => TupleT (List.map pattern_to_typ pl)
 		  	  | _                   => Anything
+		(* get_lenient: compare two typs, get the compatible typ option of both, NONE if they are not compatible  *)
 		fun get_lenient ts = 
 			case ts of
- 				(Anything, other) => SOME other
-		  	  | (other, Anything) => SOME other
-		  	  | (UnitT, UnitT)    => SOME UnitT
-		  	  | (IntT, IntT)      => SOME IntT
+ 				(Anything, other)        => SOME other
+		  	  | (other, Anything)        => SOME other
+		  	  | (UnitT, UnitT)           => SOME UnitT
+		  	  | (IntT, IntT)             => SOME IntT
 		  	  | (Datatype x, Datatype y) => if x = y then SOME (Datatype x) else NONE
-		  	  | (TupleT x, TupleT y) => 
+		  	  | (TupleT x, TupleT y)     => 
 		  			if (List.length x) <> (List.length y) then NONE
-					else let val lenient = List.map get_lenient (ListPair.zip (x, y))
-							 val valid = List.foldl (fn (x, acc) => case x of NONE => false | _ => acc) true
-					 	 in  if valid lenient 
-						  	 then SOME (TupleT (List.map (fn a => case a of SOME t => t | _ => raise NoAnswer) lenient)) 
+					else let val  lenients = List.map get_lenient (ListPair.zip (x, y))
+							 val  valid = List.foldl (fn (x, acc) => case x of NONE => false | _ => acc) true lenients
+					 	 in  if   valid
+						  	 then SOME (TupleT (List.map (fn a => case a of SOME t => t | _ => raise NoAnswer) lenients)) 
 							 else NONE
 					 	 end
 		  	  |  _                => NONE
@@ -174,7 +182,3 @@ fun typecheck_patterns (lst, pl) =
 				  (SOME Anything) (List.map pattern_to_typ pl)
 				  handle NoAnswer => NONE
 	end
-
-
-	(* 
-typecheck_patterns: Your function fails when there is no typ that all the patterns in the list can have due to a constructor given an argument with wrong type [incorrect answer] *)
