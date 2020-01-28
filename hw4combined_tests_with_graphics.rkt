@@ -31,7 +31,7 @@
 
 (define (grid-posn-to-posn grid-posn)
   (when (>= grid-posn (* pic-grid-height pic-grid-width))
-    (error "picture grid does not have that many positions"))
+    (error "picture grid does not have that many positions"))0
   (let ([row (quotient grid-posn pic-grid-width)]
         [col (remainder grid-posn pic-grid-width)])
     (make-posn (+ border-size (* approx-pic-width col))

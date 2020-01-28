@@ -3,7 +3,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;     Author        : Yihao Wang     ;;;;;;;;;;
-;;;;;;;;;;     Last modified : 28/01/2020     ;;;;;;;;;;
+;;;;;;;;;;     Last modified : 29/01/2020     ;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -29,7 +29,7 @@
 ;      note        : uses Racket's library functions map and string-append
 
 (define (string-append-map xs suffix)
-  (map (lambda (s) (string-append suffix s)) xs))
+  (map (lambda (s) (string-append s suffix)) xs))
 
 
 ; 3.   list-nth-mod
@@ -134,20 +134,39 @@
 ; 10.  cached-assoc
 ;      argument(s) : xs: list, n: number
 ;      return      : function(v: any) -> pair | #f
-;      description : 
+;      description : given a list and the cache size, return a cached version of assoc
+;                    where vec is already partially applied
 ;      note        : n must be positive
 
 (define (cached-assoc xs n)
-  (letrec ([memo null
+  (letrec ([memo (make-vector n #f)]
+           [pos  0]
+           [f (lambda (v)
+                (let ([c (vector-assoc v memo)])
+                  (if c
+                      c
+                      (let ([c (assoc v xs)])
+                        (if c
+                            (begin (vector-set! memo pos c)
+                                   (set! pos (if (= pos (- n 1)) 0 (+ pos 1)))
+                                   c)
+                            #f)))))])
+    f))
 
 
-; 11. 
-;      argument(s) :  
-;      return      : 
-;      description :  
-;      note        : 
+; 11.  while-less e1 do e2
+;      description : repeat evaluating e2 until e2 is larger than e1
+;                    e1 is evaluated exactly once, and e2 at least once
+;      note        : e1 and e2 must evaluate to numbers
 
-
+(define-syntax while-less
+  (syntax-rules (do)
+                [(while-less e1 do e2)
+                 (letrec ([e e1]
+                          [f (lambda () (if (< e2 e)
+                                            (f)
+                                            #t))])
+                   (f))]))
 
 
 
