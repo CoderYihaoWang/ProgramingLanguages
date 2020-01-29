@@ -1,7 +1,15 @@
 ;; Programming Languages, Homework 5
-
 #lang racket
-(provide (all-defined-out)) ;; so we can put tests in a second file
+(provide (all-defined-out))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;     Author        : Yihao Wang     ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;     Last modified : 29/01/2020     ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
 
 ;; definition of structures for MUPL programs - Do NOT change
 (struct var  (string) #:transparent)  ;; a variable, e.g., (var "foo")
@@ -20,11 +28,29 @@
 ;; a closure is not in "source" programs but /is/ a MUPL value; it is what functions evaluate to
 (struct closure (env fun) #:transparent) 
 
-;; Problem 1
 
-;; CHANGE (put your solutions here)
 
-;; Problem 2
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;             Problem 1              ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (racketlist->mupllist lst)
+  (if (null? lst)
+      (aunit)
+      (apair (car lst) (racketlist->mupllist (cdr lst)))))
+
+(define (mupllist->racketlist lst)
+  (if (aunit? lst)
+      null
+      (cons (apair-e1 lst) (mupllist->racketlist (apair-e2 lst)))))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;             Problem 2              ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; lookup a variable in an environment
 ;; Do NOT change this function
@@ -48,22 +74,89 @@
                (int (+ (int-num v1) 
                        (int-num v2)))
                (error "MUPL addition applied to non-number")))]
-        ;; CHANGE add more cases here
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;     added cases      ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        [(int? e) e]
+        [(ifgreater? e) (let ([v1 (eval-under-env (ifgreater-e1 e) env)]
+                              [v2 (eval-under-env (ifgreater-e2 e) env)])
+                          (if (and (int? v1)
+                                   (int? v2))
+                              (if (> (int-num v1) (int-num v2))
+                                  (eval-under-env (ifgreater-e3 e) env)
+                                  (eval-under-env (ifgreater-e4 e) env))
+                              (error "MUPL ifgreater applied to non-number")))]
+        [(fun? e) (closure env e)]        
+        [(call? e) (let ([c (eval-under-env (call-funexp e) env)]
+                         [a (eval-under-env (call-actual e) env)])
+                     (if (closure? c)
+                         (let ([f (closure-fun c)]) ; since the only way to get a closure is by evaluating a fun
+                                                    ; the result of (closure-fun c) is guaranteed to be a fun
+                                                    ; hence no need to check
+                                  (let* ([nameopt (fun-nameopt f)]
+                                         [env (cons (cons (fun-formal f) a)
+                                                    (if nameopt
+                                                        (cons (cons nameopt c) (closure-env c))
+                                                        (closure-env c)))])
+                                    (eval-under-env (fun-body f) env)))
+                         (error "MUPL call applied to non-fun")))]
+        [(mlet? e) (let ([v (eval-under-env (mlet-e e) env)])
+                     (eval-under-env (mlet-body e) (cons (cons (mlet-var e) v) env)))]
+        [(apair? e) (let ([v1 (eval-under-env (apair-e1 e) env)]
+                          [v2 (eval-under-env (apair-e2 e) env)])
+                      (apair v1 v2))]
+        [(fst? e) (let ([p (eval-under-env (fst-e e) env)])
+                    (if (apair? p)
+                        (apair-e1 p)
+                        (error "MUPL fst applied to non-apair")))]
+        [(snd? e) (let ([p (eval-under-env (snd-e e) env)])
+                    (if (apair? p)
+                        (apair-e2 p)
+                        (error "MUPL snd applied to non-apair")))]
+        [(aunit? e) e]
+        [(isaunit? e) (let ([v (eval-under-env (isaunit-e e) env)])
+                        (if (aunit? v)
+                            (int 1)
+                            (int 0)))]
+        [(closure? e) e]
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
 (define (eval-exp e)
   (eval-under-env e null))
-        
-;; Problem 3
 
-(define (ifaunit e1 e2 e3) "CHANGE")
 
-(define (mlet* lstlst e2) "CHANGE")
 
-(define (ifeq e1 e2 e3 e4) "CHANGE")
 
-;; Problem 4
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;             Problem 3              ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (ifaunit e1 e2 e3) (ifgreater (isaunit e1) (int 0) e2 e3))
+
+(define (mlet* lstlst e2)
+  (if (null? lstlst)
+      e2
+      (mlet (car (car lstlst)) (cdr (car lstlst)) (mlet* (cdr lstlst) e2))))
+
+(define (ifeq e1 e2 e3 e4)
+  (mlet "_x" e1
+        (mlet "_y" e2
+              (ifgreater (var "_x") (var "_y")
+                         e4
+                         (ifgreater (var "_y") (var "_x")
+                                    e4
+                                    e3)))))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;             Problem 4              ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (define mupl-map "CHANGE")
 
@@ -71,7 +164,11 @@
   (mlet "map" mupl-map
         "CHANGE (notice map is now in MUPL scope)"))
 
-;; Challenge Problem
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;             Problem 5              ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (struct fun-challenge (nameopt formal body freevars) #:transparent) ;; a recursive(?) 1-argument function
 
