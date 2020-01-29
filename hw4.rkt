@@ -11,7 +11,7 @@
 ; 1.   sequence
 ;      argument(s) : low: number, high: number, stride: number
 ;      return      : number list
-;      description : return a list of numbers from low to high inclusive,
+;      description : returns a list of numbers from low to high inclusive,
 ;                    seperated by stride and in sorted order
 ;      note        : stride must be positive
 
@@ -24,7 +24,7 @@
 ; 2.   string-append-map
 ;      argument(s) : xs: string list, suffix: string
 ;      return      : string list
-;      description : returns a list of string, each of them are the elements in xs
+;      description : returns a list of string, each of them is an element in xs
 ;                    suffixed with suffix, in order
 ;      note        : uses Racket's library functions map and string-append
 
@@ -54,7 +54,7 @@
 (define (stream-for-n-steps s n)
   (if (= n 0)
       null
-      (let ([s (s)])
+      (let ([s (s)]) ; let only uses bindings before the let expression, so it is ok to use the same name s
         (cons (car s) (stream-for-n-steps (cdr s) (- n 1))))))
 
 
@@ -63,16 +63,16 @@
 ;      return      : number stream
 ;      description : a stream of natrual numbers with any elements divisible by 5 negated
 ;      note        : this piece of code uses a different way of making streams
-;                    from the method shown in the lectures
-;                    instead of thunking the body part of the letrec and the second part of cons
-;                    I directly thunked the return value of the helper function f
-;                    doing this will reduce the number of thunks from 2 to only 1
+;                    from the method shown in the lectures,
+;                    instead of thunking the body part of the letrec and the second part of cons,
+;                    I directly thunked the return value of the helper function f.
+;                    doing this will reduce the number of thunks from 2 to only 1.
 ;                    I think this will produce cleaner and more understandable code
 
 (define funny-number-stream
   (letrec ([f (lambda (x)
                 (lambda () (cons (if (= 0 (remainder x 5)) (- x) x)
-                                           (f (+ x 1)))))])
+                                 (f (+ x 1)))))])
     (f 1)))
 
 
@@ -84,7 +84,8 @@
 
 (define dan-then-dog
   (letrec ([f (lambda (b)
-                (lambda () (cons (if b "dan.jpg" "dog.jpg") (f (not b)))))])
+                (lambda () (cons (if b "dan.jpg" "dog.jpg")
+                                 (f (not b)))))])
     (f #t)))
 
 ; 7.   stream-add-zero
@@ -139,19 +140,18 @@
 ;      note        : n must be positive
 
 (define (cached-assoc xs n)
-  (letrec ([memo (make-vector n #f)]
-           [pos  0]
-           [f (lambda (v)
-                (let ([c (vector-assoc v memo)])
+  (let ([memo (make-vector n #f)]
+        [pos  0])
+        (lambda (v)
+          (let ([c (vector-assoc v memo)])
+            (if c
+                c
+                (let ([c (assoc v xs)])
                   (if c
-                      c
-                      (let ([c (assoc v xs)])
-                        (if c
-                            (begin (vector-set! memo pos c)
-                                   (set! pos (if (= pos (- n 1)) 0 (+ pos 1)))
-                                   c)
-                            #f)))))])
-    f))
+                      (begin (vector-set! memo pos c)
+                             (set! pos (if (= pos (- n 1)) 0 (+ pos 1)))
+                             c)
+                      #f)))))))
 
 
 ; 11.  while-less e1 do e2
@@ -163,7 +163,9 @@
   (syntax-rules (do)
                 [(while-less e1 do e2)
                  (letrec ([e e1]
-                          [f (lambda () (if (< e2 e)
+                          [f (lambda () (if (< e2 e) ; did not check if e2 is a number
+                                                     ; as the problem specified that
+                                                     ; we could assume it is
                                             (f)
                                             #t))])
                    (f))]))
