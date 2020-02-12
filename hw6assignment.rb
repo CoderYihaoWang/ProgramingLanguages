@@ -6,29 +6,16 @@
 class MyPiece < Piece
   # The constant All_My_Pieces should be declared here
   
-  # could use All_My_Pieces = All_Pieces.concat( ... )
-  # but the guidelines say we must use the <b> same </b> format
-  # which results in longer code, as below
-  All_My_Pieces = [[[[0, 0], [1, 0], [0, 1], [1, 1]]],  # square (only needs one)
-                  rotations([[0, 0], [-1, 0], [1, 0], [0, -1]]), # T
-                  [[[0, 0], [-1, 0], [1, 0], [2, 0]], # long (only needs two)
-                   [[0, 0], [0, -1], [0, 1], [0, 2]]],
-                  rotations([[0, 0], [0, -1], [0, 1], [1, 1]]), # L
-                  rotations([[0, 0], [0, -1], [0, 1], [-1, 1]]), # inverted L
-                  rotations([[0, 0], [-1, 0], [0, -1], [1, -1]]), # S
-                  rotations([[0, 0], [1, 0], [0, -1], [-1, -1]]), # Z
-
-                  rotations([[0, 0], [-1, 0], [0, 1], [-1, 1], [1, 1]]), # axe
-                  [[[-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0]], # extra long (only needs two)
-                   [[0, -2], [0, -1], [0, 0], [0, 1], [0, 2]]],
-                  rotations([[0, 0], [0, -1], [1, 0]])] # heart
+  All_My_Pieces = All_Pieces.concat(
+    [rotations([[0, 0], [-1, 0], [0, 1], [-1, 1], [1, 1]]), # axe
+     [[[-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0]], # extra long (only needs two)
+      [[0, -2], [0, -1], [0, 0], [0, 1], [0, 2]]],
+     rotations([[0, 0], [0, -1], [1, 0]])]) # heart
 
   # your enhancements here
   def self.next_piece (board)
-    Piece.new(All_My_Pieces.sample, board)
+    MyPiece.new(All_My_Pieces.sample, board)
   end
-
-
 
 end
 
@@ -49,21 +36,24 @@ class MyBoard < Board
     @current_pos = nil
   end
 
+  # rotate the piece for 180 degrees
+  def rotate_180
+    if !game_over? and @game.is_running?
+      @current_block.move(0, 0, 2)
+    end
+    draw
+  end
 
 end
 
 class MyTetris < Tetris
   # your enhancements here
 
-  def initialize
-    super.initialize
-    @root.bind('c', proc {cheat})
+  def key_bindings
+    super
+    @root.bind('c', proc {self.cheat})
+    @root.bind('u', proc {@board.rotate_180})
   end
-
-  def cheat
-    
-  end
-
 
   # creates a canvas and the board that interacts with it
   def set_board
@@ -74,6 +64,16 @@ class MyTetris < Tetris
     @board.draw
   end
 
+  def cheat
+    if @running
+      @running = false
+      @timer.stop
+    else
+      @running = true
+      self.run_game
+    end
+  end
+
+  
+
 end
-
-
