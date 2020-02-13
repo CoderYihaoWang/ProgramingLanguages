@@ -6,11 +6,12 @@
 class MyPiece < Piece
   
   # add three new pieces
-  All_My_Pieces = All_Pieces.concat(
-    [rotations([[0, 0], [-1, 0], [0, 1], [-1, 1], [1, 1]]), # axe
-     [[[-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0]],           # extra long (only needs two)
-      [[0, -2], [0, -1], [0, 0], [0, 1], [0, 2]]],
-     rotations([[0, 0], [0, -1], [1, 0]])])                 # heart
+  All_My_Pieces = All_Pieces + [
+    rotations([[0, 0], [-1, 0], [0, 1], [-1, 1], [1, 1]]), # axe
+    [[[-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0]],           # extra long (only needs two)
+     [[0, -2], [0, -1], [0, 0], [0, 1], [0, 2]]],
+    rotations([[0, 0], [0, -1], [1, 0]])                   # heart
+  ]                 
 
   # use All_My_Pieces instead of My_Pieces
   def self.next_piece (board)
@@ -22,7 +23,7 @@ class MyPiece < Piece
     MyPiece.new([[[0, 0]]], board)
   end
 
-end
+end # MyPiece
 
 class MyBoard < Board
 
@@ -75,7 +76,7 @@ class MyBoard < Board
     @delay = [@delay - 2, 80].max
   end
 
-end
+end # MyBoard
 
 class MyTetris < Tetris
 
@@ -106,4 +107,4 @@ class MyTetris < Tetris
     @board.draw
   end
 
-end
+end # MyTetris
