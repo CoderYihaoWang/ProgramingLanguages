@@ -21,15 +21,15 @@
 *)
 datatype geom_exp = 
        NoPoints
-	 | Point of real * real (* represents point (x,y) *)
-	 | Line of real * real (* represents line (slope, intercept) *)
-	 | VerticalLine of real (* x value *)
-	 | LineSegment of real * real * real * real (* x1,y1 to x2,y2 *)
-	 | Intersect of geom_exp * geom_exp (* intersection expression *)
-	 | Let of string * geom_exp * geom_exp (* let s = e1 in e2 *)
-	 | Var of string
+	 | Point        of real * real                  (* represents point (x,y) *)
+	 | Line         of real * real                  (* represents line (slope, intercept) *)
+	 | VerticalLine of real                         (* x value *)
+	 | LineSegment  of real * real * real * real    (* x1,y1 to x2,y2 *)
+	 | Intersect    of geom_exp * geom_exp          (* intersection expression *)
+	 | Let          of string * geom_exp * geom_exp (* let s = e1 in e2 *)
+	 | Var          of string
 (* CHANGE add shifts for expressions of the form Shift(deltaX, deltaY, exp *)
-	 | Shift of real * real * geom_exp
+	 | Shift        of real * real * geom_exp
 
 exception BadProgram of string
 exception Impossible of string
@@ -172,9 +172,9 @@ fun intersect (v1,v2) =
 
 fun eval_prog (e,env) =
     case e of
-	NoPoints => e (* first 5 cases are all values, so no computation *)
-      | Point _  => e
-      | Line _   => e
+		NoPoints       => e (* first 5 cases are all values, so no computation *)
+      | Point _        => e
+      | Line _         => e
       | VerticalLine _ => e
       | LineSegment _  => e
       | Var s => 
@@ -184,8 +184,8 @@ fun eval_prog (e,env) =
       | Let(s,e1,e2) => eval_prog (e2, ((s, eval_prog(e1,env)) :: env))
       | Intersect(e1,e2) => intersect(eval_prog(e1,env), eval_prog(e2, env))
 (* CHANGE: Add a case for Shift expressions *)
-	  | Shift(v1, v2, e) => 
-	  		(case eval_prog (e, env) of
+	  | Shift(v1, v2, e1) => 
+	  		(case eval_prog (e1, env) of
 			    NoPoints => NoPoints
 			  | Point (x, y) => Point (x + v1, y + v2)
 			  | Line (m, b) => Line (m, b + v2 - m * v1)
@@ -203,4 +203,7 @@ fun preprocess_prog e =
 			else if real_close (x1, x2)
 			then if y1 > y2 then LineSegment (x2, y2, x1, y1) else e
 			else if x1 > x2 then LineSegment (x2, y2, x1, y1) else e
+	  | Let (s, e1, e2) => Let (s, preprocess_prog e1, preprocess_prog e2)
+	  | Intersect (e1, e2) => Intersect (preprocess_prog e1, preprocess_prog e2)
+	  | Shift (v1, v2, e1) => Shift (v1, v2, preprocess_prog e1)
 	  | _ => e
