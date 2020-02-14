@@ -276,24 +276,7 @@ class Intersect < GeometryExpression
   end
 
   def preprocess_prog
-  end
-
-  def shift(dx,dy)
-  end
-
-  def intersect other
-  end
-
-  def intersectPoint p
-  end
-
-  def intersectLine line
-  end
-
-  def intersectVerticalLine vline
-  end
-
-  def intersectWithSegmentAsLineResult seg
+    Intersect.new(@e1.preprocess_prog, @e2.preprocess_prog)
   end
 
 end
@@ -309,28 +292,11 @@ class Let < GeometryExpression
   end
 
   def eval_prog env 
-    
+    #TODO
   end
 
   def preprocess_prog
-  end
-
-  def shift(dx,dy)
-  end
-
-  def intersect other
-  end
-
-  def intersectPoint p
-  end
-
-  def intersectLine line
-  end
-
-  def intersectVerticalLine vline
-  end
-
-  def intersectWithSegmentAsLineResult seg
+    Let.new(@s, @e1.preprocess_prog, @e2.preprocess_prog)
   end
 
 end
@@ -348,26 +314,6 @@ class Var < GeometryExpression
     pr[1]
   end
 
-  def preprocess_prog
-  end
-
-  def shift(dx,dy)
-  end
-
-  def intersect other
-  end
-
-  def intersectPoint p
-  end
-
-  def intersectLine line
-  end
-
-  def intersectVerticalLine vline
-  end
-
-  def intersectWithSegmentAsLineResult seg
-  end
 end
 
 class Shift < GeometryExpression
@@ -380,28 +326,11 @@ class Shift < GeometryExpression
   end
 
   def eval_prog env 
-    Shift.new(@dx, @dy, e.eval_prog env)
+    #TODO
   end
 
   def preprocess_prog
-  end
-
-  def shift(dx,dy)
-  end
-
-  def intersect other
-  end
-
-  def intersectPoint p
-  end
-
-  def intersectLine line
-  end
-
-  def intersectVerticalLine vline
-  end
-
-  def intersectWithSegmentAsLineResult seg
+    Shift.new(@dx, @dy, e.preprocess_prog)
   end
 
 end
