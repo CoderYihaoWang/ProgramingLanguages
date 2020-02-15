@@ -282,17 +282,17 @@ class LineSegment < GeometryValue
   end
 
   def preprocess_prog
-    if real_close_point(@x1, @y1, @x2, @y2)
+    if real_close_point(@x1, @y1, @x2, @y2) # collapsed segment
       Point.new(@x1, @y1)
-    elsif @x1 == @x2
-      if @y1 > @y2 
+    elsif @x1 == @x2 # on a vertical line
+      if @y1 > @y2  #switching ends according to y
         LineSegment.new(@x2, @y2, @x1, @y1) 
-      else 
+      else # no need to switch
         self 
       end
-    elsif @x1 > @x2
+    elsif @x1 > @x2 # not on a vertical line, switch ends according to x
       LineSegment.new(@x2, @y2, @x1, @y1) 
-    else 
+    else # no need to switch
       self 
     end
   end
