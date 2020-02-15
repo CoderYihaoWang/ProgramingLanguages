@@ -168,5 +168,8 @@ if not (s1.x1 == TWO and s1.y1 == THREE and s1.x2 == SIX and s1.y2 == 9)
 	puts "Shift should shift e by dx and dy"
 end
 
+#new tests
+p Let.new("x",Let.new("x",NoPoints.new,Point.new(0.0,0.0)),Var.new("x")).eval_prog([])
 
+p Let.new("x",NoPoints.new,Let.new("x",Var.new("x"),Var.new("x"))).eval_prog([])
 
